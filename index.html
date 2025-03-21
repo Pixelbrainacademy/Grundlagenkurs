@@ -469,7 +469,8 @@
             }
             
             function updateSpeed() {
-                speed = parseFloat(speedControl.value);
+                // Invertiere die Geschwindigkeit: Höherer Wert = schneller (weniger Sekunden pro Schritt)
+                speed = 3.5 - parseFloat(speedControl.value);
                 updateSpeedDisplay();
             }
             
