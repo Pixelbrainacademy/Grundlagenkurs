@@ -17,7 +17,7 @@
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 800px;
+            max-width: 650px; /* Schmaler als zuvor */
             margin: 0 auto;
             background-color: #ffffff;
             border-radius: 8px;
@@ -298,12 +298,7 @@
         </div>
         
         <!-- Explanation -->
-        <div class="explanation" id="explanation">
-            <p><strong>Erklärung:</strong> Diese Animation zeigt, wie ein Language Model (LLM) einen Text generiert. 
-            Bei jedem Schritt wählt das Modell aus mehreren möglichen Wörtern aus, basierend auf 
-            deren berechneter Wahrscheinlichkeit. Die Farben zeigen die Wahrscheinlichkeit an: Grün = hoch, Gelb = mittel, Rot = niedrig.
-            Das ausgewählte Wort wird blau umrandet.</p>
-        </div>
+        <!-- Erklärung entfernt -->
     </div>
 
     <script>
@@ -407,7 +402,7 @@
             const resetButton = document.getElementById('resetButton');
             const speedControl = document.getElementById('speedControl');
             const speedValue = document.getElementById('speedValue');
-            const explanation = document.getElementById('explanation');
+            // explanation element removed
             
             // State variables
             let currentStep = 0;
@@ -420,12 +415,7 @@
             resetButton.addEventListener('click', resetAnimation);
             speedControl.addEventListener('input', updateSpeed);
             
-            // Make explanation collapsible on mobile
-            if (explanation) {
-                explanation.addEventListener('click', function() {
-                    this.classList.toggle('expanded');
-                });
-            }
+            // Explanation removed, no need for this code
             
             // Initialize
             updateSpeedDisplay();
