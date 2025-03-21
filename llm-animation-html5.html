@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Denkprozess Animation</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 16px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+            font-size: 24px;
+        }
+        h3 {
+            color: #555;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .prompt-box {
+            background-color: #e3f2fd;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+        .output-box {
+            background-color: #e8f5e9;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            min-height: 80px;
+            position: relative;
+        }
+        .thinking-box {
+            background-color: #f5f5f5;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 20px;
+            background-color: #000;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .word-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+        .word-option.selected {
+            border: 2px solid #2196f3;
+            background-color: #e3f2fd;
+        }
+        .probability-bar {
+            width: 60px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .high-prob {
+            background-color: #4caf50;
+        }
+        .medium-prob {
+            background-color: #ffeb3b;
+        }
+        .low-prob {
+            background-color: #f44336;
+        }
+        .prob-container {
+            display: flex;
+            align-items: center;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .start-button {
+            background-color: #4caf50;
+            color: white;
+        }
+        .start-button:hover {
+            background-color: #388e3c;
+        }
+        .pause-button {
+            background-color: #ffc107;
+            color: black;
+        }
+        .pause-button:hover {
+            background-color: #ffa000;
+        }
+        .reset-button {
+            background-color: #757575;
+            color: white;
+        }
+        .reset-button:hover {
+            background-color: #616161;
+        }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .speed-label {
+            font-size: 14px;
+            color: #666;
+        }
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .explanation {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #555;
+        }
+        .explanation strong {
+            color: #333;
+        }
+        .selected-word {
+            font-style: italic;
+            color: #2196f3;
+            margin-top: 8px;
+        }
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>LLM Denkprozess Visualisierung</h2>
+        
+        <!-- Prompt -->
+        <div>
+            <h3>Eingabe-Prompt:</h3>
+            <div class="prompt-box">Anschreiben Kunde Imagefilm?</div>
+        </div>
+        
+        <!-- Output -->
+        <div>
+            <h3>LLM-Ausgabe:</h3>
+            <div class="output-box" id="outputText">
+                <span class="cursor"></span>
+            </div>
+        </div>
+        
+        <!-- Thinking Process -->
+        <div>
+            <h3>Aktueller Denkprozess:</h3>
+            <div class="thinking-box" id="thinkingProcess">
+                <p id="waitingMessage" style="color: #888; font-style: italic;">Warte auf Start der Animation...</p>
+                <div id="wordOptions" class="grid-container" style="display: none;"></div>
+                <p id="selectedWord" class="selected-word" style="display: none;"></p>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <div class="button-group">
+                <button id="playPauseButton" class="start-button">Start</button>
+                <button id="resetButton" class="reset-button">Zurücksetzen</button>
+            </div>
+            <div class="speed-control">
+                <span class="speed-label">Langsam</span>
+                <input type="range" id="speedControl" min="0.5" max="3" step="0.5" value="1.5">
+                <span class="speed-label">Schnell</span>
+            </div>
+            <div class="speed-label" id="speedValue">Geschwindigkeit: 1.5s pro Wort</div>
+        </div>
+        
+        <!-- Explanation -->
+        <div class="explanation">
+            <p><strong>Erklärung:</strong> Diese Animation zeigt, wie ein Language Model (LLM) einen Text generiert. 
+            Bei jedem Schritt wählt das Modell aus mehreren möglichen Wörtern aus, basierend auf 
+            deren berechneter Wahrscheinlichkeit. Die Farben zeigen die Wahrscheinlichkeit an: Grün = hoch, Gelb = mittel, Rot = niedrig.
+            Das ausgewählte Wort wird blau umrandet.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prompt and response
+            const prompt = "Anschreiben Kunde Imagefilm?";
+            const responseTokens = [
+                "Sehr", 
+                "geehrte/r", 
+                "[Name", 
+                "des", 
+                "Kunden],", 
+                "vielen", 
+                "Dank", 
+                "für", 
+                "Ihr", 
+                "Interesse"
+            ];
+            
+            // Thinking process data
+            const thinkingProcess = [
+                [
+                    { word: "Sehr", probability: 65 },
+                    { word: "Hallo", probability: 15 },
+                    { word: "Guten", probability: 10 },
+                    { word: "Liebes", probability: 5 },
+                    { word: "Werte", probability: 5 }
+                ],
+                [
+                    { word: "geehrte/r", probability: 80 },
+                    { word: "Frau/Herr", probability: 10 },
+                    { word: "Dame/Herr", probability: 5 },
+                    { word: "Kundin/Kunde", probability: 3 },
+                    { word: "Geschäftspartner/in", probability: 2 }
+                ],
+                [
+                    { word: "[Name", probability: 75 },
+                    { word: "[Firmenname]", probability: 15 },
+                    { word: "[Ansprechpartner]", probability: 5 },
+                    { word: "[Kontakt]", probability: 3 },
+                    { word: "[Team]", probability: 2 }
+                ],
+                [
+                    { word: "des", probability: 85 },
+                    { word: "vom", probability: 5 },
+                    { word: "der", probability: 5 },
+                    { word: "Ihres", probability: 3 },
+                    { word: "unseres", probability: 2 }
+                ],
+                [
+                    { word: "Kunden],", probability: 90 },
+                    { word: "Unternehmens],", probability: 5 },
+                    { word: "Teams],", probability: 2 },
+                    { word: "Betriebs],", probability: 2 },
+                    { word: "Partners],", probability: 1 }
+                ],
+                [
+                    { word: "vielen", probability: 60 },
+                    { word: "herzlichen", probability: 20 },
+                    { word: "besten", probability: 15 },
+                    { word: "wir", probability: 3 },
+                    { word: "großen", probability: 2 }
+                ],
+                [
+                    { word: "Dank", probability: 85 },
+                    { word: "danken", probability: 8 },
+                    { word: "bedanken", probability: 4 },
+                    { word: "danken uns", probability: 2 },
+                    { word: "sind dankbar", probability: 1 }
+                ],
+                [
+                    { word: "für", probability: 95 },
+                    { word: "bezüglich", probability: 2 },
+                    { word: "über", probability: 1 },
+                    { word: "hinsichtlich", probability: 1 },
+                    { word: "betreffend", probability: 1 }
+                ],
+                [
+                    { word: "Ihr", probability: 80 },
+                    { word: "das", probability: 15 },
+                    { word: "Ihres", probability: 3 },
+                    { word: "dieses", probability: 1 },
+                    { word: "unser", probability: 1 }
+                ],
+                [
+                    { word: "Interesse", probability: 65 },
+                    { word: "Anfrage", probability: 20 },
+                    { word: "Anliegen", probability: 10 },
+                    { word: "Feedback", probability: 4 },
+                    { word: "Kontakt", probability: 1 }
+                ]
+            ];
+            
+            // DOM elements
+            const outputText = document.getElementById('outputText');
+            const thinkingProcessEl = document.getElementById('thinkingProcess');
+            const wordOptions = document.getElementById('wordOptions');
+            const waitingMessage = document.getElementById('waitingMessage');
+            const selectedWord = document.getElementById('selectedWord');
+            const playPauseButton = document.getElementById('playPauseButton');
+            const resetButton = document.getElementById('resetButton');
+            const speedControl = document.getElementById('speedControl');
+            const speedValue = document.getElementById('speedValue');
+            
+            // State variables
+            let currentStep = 0;
+            let isPlaying = false;
+            let speed = 1.5; // seconds per step
+            let timer = null;
+            
+            // Event listeners
+            playPauseButton.addEventListener('click', togglePlayPause);
+            resetButton.addEventListener('click', resetAnimation);
+            speedControl.addEventListener('input', updateSpeed);
+            
+            // Initialize
+            updateSpeedDisplay();
+            
+            // Functions
+            function togglePlayPause() {
+                isPlaying = !isPlaying;
+                
+                if (isPlaying) {
+                    playPauseButton.textContent = 'Pause';
+                    playPauseButton.className = 'pause-button';
+                    
+                    if (currentStep >= responseTokens.length) {
+                        currentStep = 0;
+                        updateOutputDisplay();
+                    }
+                    
+                    advanceStep();
+                } else {
+                    playPauseButton.textContent = 'Start';
+                    playPauseButton.className = 'start-button';
+                    clearTimeout(timer);
+                }
+            }
+            
+            function resetAnimation() {
+                isPlaying = false;
+                currentStep = 0;
+                clearTimeout(timer);
+                
+                playPauseButton.textContent = 'Start';
+                playPauseButton.className = 'start-button';
+                
+                updateOutputDisplay();
+                updateThinkingDisplay();
+            }
+            
+            function updateSpeed() {
+                speed = parseFloat(speedControl.value);
+                updateSpeedDisplay();
+            }
+            
+            function updateSpeedDisplay() {
+                speedValue.textContent = `Geschwindigkeit: ${speed}s pro Wort`;
+            }
+            
+            function advanceStep() {
+                if (!isPlaying) return;
+                
+                if (currentStep < responseTokens.length) {
+                    currentStep++;
+                    updateOutputDisplay();
+                    updateThinkingDisplay();
+                    
+                    if (currentStep < responseTokens.length) {
+                        timer = setTimeout(advanceStep, speed * 1000);
+                    } else {
+                        isPlaying = false;
+                        playPauseButton.textContent = 'Neu starten';
+                        playPauseButton.className = 'start-button';
+                    }
+                }
+            }
+            
+            function updateOutputDisplay() {
+                const displayedText = responseTokens.slice(0, currentStep).join(" ");
+                outputText.innerHTML = `${displayedText}<span class="cursor"></span>`;
+            }
+            
+            function updateThinkingDisplay() {
+                if (currentStep === 0) {
+                    waitingMessage.textContent = 'Warte auf Start der Animation...';
+                    waitingMessage.style.display = 'block';
+                    wordOptions.style.display = 'none';
+                    selectedWord.style.display = 'none';
+                } else if (currentStep > responseTokens.length) {
+                    waitingMessage.textContent = 'Generierung abgeschlossen.';
+                    waitingMessage.style.display = 'block';
+                    wordOptions.style.display = 'none';
+                    selectedWord.style.display = 'none';
+                } else {
+                    waitingMessage.style.display = 'none';
+                    wordOptions.style.display = 'grid';
+                    selectedWord.style.display = 'block';
+                    
+                    const stepIndex = currentStep - 1;
+                    const options = thinkingProcess[stepIndex];
+                    const selectedOption = responseTokens[stepIndex];
+                    
+                    wordOptions.innerHTML = '';
+                    
+                    options.forEach(option => {
+                        const isSelected = option.word === selectedOption;
+                        const probClass = option.probability >= 70 ? 'high-prob' : 
+                                          option.probability >= 40 ? 'medium-prob' : 'low-prob';
+                        
+                        const optionElement = document.createElement('div');
+                        optionElement.className = `word-option ${isSelected ? 'selected' : ''}`;
+                        
+                        optionElement.innerHTML = `
+                            <span>${option.word}</span>
+                            <div class="prob-container">
+                                <div class="probability-bar ${probClass}"></div>
+                                <span>${option.probability}%</span>
+                            </div>
+                        `;
+                        
+                        wordOptions.appendChild(optionElement);
+                    });
+                    
+                    selectedWord.textContent = `✓ Ausgewähltes Wort: ${selectedOption}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
