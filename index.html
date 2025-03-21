@@ -51,6 +51,7 @@
             padding: 16px;
             border-radius: 6px;
             margin-bottom: 24px;
+            min-height: 350px; /* Feste Mindesthöhe */
         }
         .cursor {
             display: inline-block;
@@ -202,8 +203,45 @@
             <h3>Aktueller Denkprozess:</h3>
             <div class="thinking-box" id="thinkingProcess">
                 <p id="waitingMessage" style="color: #888; font-style: italic;">Warte auf Start der Animation...</p>
-                <div id="wordOptions" class="grid-container" style="display: none;"></div>
-                <p id="selectedWord" class="selected-word" style="display: none;"></p>
+                <div id="wordOptions" class="grid-container">
+                    <!-- Platzhalter für Wortoptionen, um Höhe zu reservieren -->
+                    <div class="word-option placeholder" style="visibility: hidden;">
+                        <span>Platzhalter</span>
+                        <div class="prob-container">
+                            <div class="probability-bar"></div>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                    <div class="word-option placeholder" style="visibility: hidden;">
+                        <span>Platzhalter</span>
+                        <div class="prob-container">
+                            <div class="probability-bar"></div>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                    <div class="word-option placeholder" style="visibility: hidden;">
+                        <span>Platzhalter</span>
+                        <div class="prob-container">
+                            <div class="probability-bar"></div>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                    <div class="word-option placeholder" style="visibility: hidden;">
+                        <span>Platzhalter</span>
+                        <div class="prob-container">
+                            <div class="probability-bar"></div>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                    <div class="word-option placeholder" style="visibility: hidden;">
+                        <span>Platzhalter</span>
+                        <div class="prob-container">
+                            <div class="probability-bar"></div>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                </div>
+                <p id="selectedWord" class="selected-word" style="visibility: hidden;">✓ Ausgewähltes Wort: </p>
             </div>
         </div>
         
@@ -413,19 +451,20 @@
             
             function updateThinkingDisplay() {
                 if (currentStep === 0) {
-                    waitingMessage.textContent = 'Warte auf Start der Animation...';
                     waitingMessage.style.display = 'block';
-                    wordOptions.style.display = 'none';
-                    selectedWord.style.display = 'none';
+                    document.querySelectorAll('.word-option.placeholder').forEach(el => {
+                        el.style.visibility = 'hidden';
+                    });
+                    selectedWord.style.visibility = 'hidden';
                 } else if (currentStep > responseTokens.length) {
                     waitingMessage.textContent = 'Generierung abgeschlossen.';
                     waitingMessage.style.display = 'block';
-                    wordOptions.style.display = 'none';
-                    selectedWord.style.display = 'none';
+                    document.querySelectorAll('.word-option').forEach(el => {
+                        el.style.visibility = 'hidden';
+                    });
+                    selectedWord.style.visibility = 'hidden';
                 } else {
                     waitingMessage.style.display = 'none';
-                    wordOptions.style.display = 'grid';
-                    selectedWord.style.display = 'block';
                     
                     const stepIndex = currentStep - 1;
                     const options = thinkingProcess[stepIndex];
@@ -440,6 +479,7 @@
                         
                         const optionElement = document.createElement('div');
                         optionElement.className = `word-option ${isSelected ? 'selected' : ''}`;
+                        optionElement.style.visibility = 'visible';
                         
                         optionElement.innerHTML = `
                             <span>${option.word}</span>
@@ -453,6 +493,7 @@
                     });
                     
                     selectedWord.textContent = `✓ Ausgewähltes Wort: ${selectedOption}`;
+                    selectedWord.style.visibility = 'visible';
                 }
             }
         });
